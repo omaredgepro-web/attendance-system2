@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>نظام تسجيل الحضور اليومي</title>
   
-  <!-- ربط ملف الـ Manifest لتثبيت التطبيق PWA -->
+  <!-- ربط ملف الـ Manifest لتثبيت التطبيق -->
   <link rel="manifest" href="https://omaredgepro-web.github.io/attendance-system2/manifest.json">
   <meta name="theme-color" content="#10b981">
 
@@ -113,11 +113,11 @@
 <script>
   const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyrNlSdWmNdiXO7MWmjGTm-rCd-pr-DU2p_vlRVDv2k8Yd8_Rlc79elW4qX0IIrMkymxA/exec"; 
 
-  // 1. إنشاء و قراءة معرّف الجهاز الثابت محلياً
+  // 1. توليد وقراءة معرّف الجهاز الثابت محلياً
   function getOrCreatePersistentDeviceId() {
     let devId = localStorage.getItem("permanent_device_id");
     if (!devId) {
-      devId = 'PWA_' + Math.random().toString(36).substring(2, 9) + '_' + Date.now().toString(36);
+      devId = 'dev_' + Math.random().toString(36).substring(2, 9) + '_' + Date.now().toString(36);
       localStorage.setItem("permanent_device_id", devId);
     }
     document.getElementById("deviceId").value = devId;
@@ -126,7 +126,7 @@
 
   getOrCreatePersistentDeviceId();
 
-  // 2. إتاحة خيار تثبيت التطبيق PWA
+  // 2. إتاحة خيار تثبيت التطبيق
   let deferredPrompt;
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
@@ -182,7 +182,7 @@
 
   fetchEmployees();
 
-  // 4. تسجيل الحضور وإرسال البيانات
+  // 4. تسجيل الحضور وإرسال البيانات مباشرة بدون PIN
   function registerAttendance() {
     const employee = document.getElementById("employee").value;
     const deviceId = document.getElementById("deviceId").value.trim();
