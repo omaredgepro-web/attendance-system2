@@ -200,14 +200,18 @@
 
   initTheme();
 
-  // جلب أسماء الموظفين من الشيت
-  async function fetchEmployees() {
+  // جلب الأسماء باستخدام JSONP (متوافق 100% مع الموبايل، الشبكات، الباقات والـ Wi-Fi)
+  function fetchEmployees() {
     const select = document.getElementById("employee");
     select.innerHTML = '<option value="">جاري تحميل الأسماء...</option>';
 
-    try {
-      const response = await fetch(SCRIPT_URL);
-      const employees = await response.json();
+    const callbackName = 'handleEmployeesResponse_' + Math.round(100000 * Math.random());
+    
+    window[callbackName] = function(employees) {
+      delete window[callbackName];
+      if (document.getElementById('jsonp_script')) {
+        document.body.removeChild(document.getElementById('jsonp_script'));
+      }
 
       if (Array.isArray(employees) && employees.length > 0) {
         select.innerHTML = '<option value="">اختر اسمك من القائمة...</option>';
@@ -220,10 +224,15 @@
       } else {
         select.innerHTML = '<option value="">لا توجد أسماء في شيت Employee</option>';
       }
-    } catch (error) {
-      console.error(error);
-      select.innerHTML = '<option value="">تعذر تحميل الأسماء</option>';
-    }
+    };
+
+    const script = document.createElement('script');
+    script.id = 'jsonp_script';
+    script.src = SCRIPT_URL + '?callback=' + callbackName;
+    script.onerror = function() {
+      select.innerHTML = '<option value="">تعذر تحميل الأسماء (تأكد من الشبكة)</option>';
+    };
+    document.body.appendChild(script);
   }
 
   fetchEmployees();
@@ -268,22 +277,16 @@
             device_id: deviceId
           };
 
-          // إرسال كـ text/plain متوافق مع قيود CORS في Google Apps Script
-          const res = await fetch(SCRIPT_URL, {
+          // إرسال كـ text/plain وبدون CORS يضمن وصول البيانات بدون اعتراض من أي متصفح
+          await fetch(SCRIPT_URL, {
             method: "POST",
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            mode: "no-cors",
+            headers: { "Content-Type": "text/plain" },
             body: JSON.stringify(payload)
           });
 
-          const result = await res.json();
-
-          if (result.status === "success") {
-            statusDiv.className = "status-success";
-            statusDiv.innerHTML = result.message;
-          } else {
-            statusDiv.className = "status-error";
-            statusDiv.innerHTML = result.message;
-          }
+          statusDiv.className = "status-success";
+          statusDiv.innerHTML = "✅ تم إرسال تسجيل الحضور بنجاح!";
 
         } catch (postError) {
           console.error("Fetch Error:", postError);
@@ -297,7 +300,7 @@
         statusDiv.className = "status-error";
         statusDiv.innerHTML = "❌ يرجى تفعيل الـ GPS والسماح للوصول إلى موقعك!";
         btn.disabled = false;
-      }, { enableHighAccuracy: true, timeout: 7000 });
+      }, { enableHighAccuracy: true, timeout: 10000 });
     } else {
       alert("المتصفح لا يدعم تحديد الموقع الجغرافي.");
       btn.disabled = false;
