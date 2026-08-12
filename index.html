@@ -9,30 +9,30 @@
     :root {
       --bg-color: #f4f7f6;
       --card-bg: #ffffff;
-      --text-color: #0e13a4;
-      --subtext-color: #7f8c8d;
-      --input-bg: #f9fbfb;
+      --text-color: #1e293b;
+      --subtext-color: #64748b;
+      --input-bg: #f8fafc;
       --border-color: #e2e8f0;
       --primary-color: #10b981;
-      --primary-hover: #c0db28;
+      --primary-hover: #059669;
       --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
     }
 
     [data-theme="dark"] {
-      --bg-color: #661C1E;
-      --card-bg: #CD7A41;
-      --text-color: #661C1E;
-      --subtext-color: #661C1E;
-      --input-bg: #f5f8fc;
-      --border-color: #334155;
+      --bg-color: #1b1213;
+      --card-bg: #2d1819;
+      --text-color: #f8fafc;
+      --subtext-color: #cbd5e1;
+      --input-bg: #1b1213;
+      --border-color: #4a2426;
       --primary-color: #661C1E;
-      --primary-hover: #f00606;
-      --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+      --primary-hover: #882427;
+      --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
     }
 
     * {
       box-sizing: border-box;
-      transition: background-color 0.3s, color 0.3s;
+      transition: background-color 0.3s, color 0.3s, border-color 0.3s;
     }
 
     body {
@@ -62,6 +62,12 @@
       justify-content: space-between;
       align-items: center;
       margin-bottom: 25px;
+    }
+
+    .header-title-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
     }
 
     h2 {
@@ -123,7 +129,7 @@
       font-weight: 700;
       font-family: 'Tajawal', sans-serif;
       cursor: pointer;
-      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
 
     .btn-submit:hover {
@@ -144,9 +150,12 @@
       min-height: 24px;
       line-height: 1.5;
     }
-    .card .header img{
-    width: 50%;
-    border-radius: 15px;
+
+    .card .header img {
+      width: 60px;
+      height: 60px;
+      object-fit: cover;
+      border-radius: 15px;
     }
 
     .status-success { color: #10b981; }
@@ -159,8 +168,11 @@
 
 <div class="card">
   <div class="header">
-    <h2>LOG IN</h2>
-    <img src="../img/images (1).jpg" alt="" >
+    <div class="header-title-container">
+      <h2>LOG IN</h2>
+      <img src="../img/images (1).jpg" alt="Logo">
+    </div>
+    <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙 داكن</button>
   </div>
 
   <div class="form-group">
@@ -199,7 +211,12 @@
     updateThemeBtnText(newTheme);
   }
 
-  
+  function updateThemeBtnText(theme) {
+    const btn = document.getElementById('themeBtn');
+    if (btn) {
+      btn.innerText = theme === 'dark' ? '☀️ فاتح' : '🌙 داكن';
+    }
+  }
 
   initTheme();
 
@@ -239,7 +256,7 @@
 
   fetchEmployees();
 
-  // 2. دالة الحصول على Device ID موثوقة ومضمونة 100%
+  // 2. دالة الحصول على Device ID
   async function getDeviceId() {
     let localId = localStorage.getItem("app_device_id");
 
