@@ -4,6 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>نظام تسجيل الحضور اليومي</title>
+  
+  <!-- ربط ملف الـ Manifest لتثبيت التطبيق PWA -->
+  <link rel="manifest" href="https://omaredgepro-web.github.io/attendance-system2/manifest.json">
+  <meta name="theme-color" content="#10b981">
+
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -14,8 +19,7 @@
       --input-bg: #f9fbfb;
       --border-color: #e2e8f0;
       --primary-color: #10b981;
-      --primary-hover: #c0db28;
-      --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+      --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
     }
 
     [data-theme="dark"] {
@@ -26,11 +30,10 @@
       --input-bg: #f5f8fc;
       --border-color: #334155;
       --primary-color: #661C1E;
-      --primary-hover: #f00606;
       --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
     }
 
-    * { box-sizing: border-box; transition: background-color 0.3s, color 0.3s; }
+    * { box-sizing: border-box; }
 
     body {
       font-family: 'Tajawal', sans-serif;
@@ -50,21 +53,24 @@
     .form-group { margin-bottom: 20px; text-align: right; }
     label { display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500; color: var(--subtext-color); }
 
-    select, input[type="password"] {
+    select, input[type="text"] {
       width: 100%; padding: 14px; border-radius: 12px; border: 1px solid var(--border-color);
       background-color: var(--input-bg); color: var(--text-color); font-size: 15px;
       font-family: 'Tajawal', sans-serif; outline: none;
     }
 
-    .btn-submit {
+    input[readonly] { cursor: not-allowed; opacity: 0.85; font-weight: bold; background-color: #e2e8f0; }
+
+    .btn-submit, .btn-install {
       width: 100%; padding: 15px; margin-top: 10px; border-radius: 12px; border: none;
-      background-color: var(--primary-color); color: white; font-size: 16px; font-weight: 700;
-      font-family: 'Tajawal', sans-serif; cursor: pointer; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+      font-size: 16px; font-weight: 700; font-family: 'Tajawal', sans-serif; cursor: pointer;
     }
+    .btn-submit { background-color: var(--primary-color); color: white; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2); }
+    .btn-install { background-color: #2563eb; color: white; display: none; margin-bottom: 10px; }
 
     .btn-submit:disabled { background-color: #94a3b8; cursor: not-allowed; box-shadow: none; }
     #status { margin-top: 20px; font-size: 14px; font-weight: 500; text-align: center; min-height: 24px; line-height: 1.5; }
-    .card .header img { width: 50%; border-radius: 15px; }
+    .card .header img { width: 45%; border-radius: 15px; }
     .status-success { color: #10b981; }
     .status-error { color: #ef4444; }
     .status-loading { color: #3b82f6; }
@@ -74,20 +80,22 @@
 
 <div class="card">
   <div class="header">
-    <h2>LOG IN</h2>
-    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTQWRngBxbivIyvtXpDf5llmZxK6iRZFyp6-_1pO5opOdZV89m5D56OQus&s=10" alt="">
+    <h2>تسجيل الحضور</h2>
+    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTQWRngBxbivIyvtXpDf5llmZxK6iRZFyp6-_1pO5opOdZV89m5D56OQus&s=10" alt="Logo">
   </div>
+
+  <button class="btn-install" id="btnInstall" onclick="installApp()">📱 تثبيت التطبيق على الشاشة الرئيسية</button>
 
   <div class="form-group">
     <label for="employee">اسم الموظف:</label>
-    <select id="employee" onchange="onEmployeeSelect()">
+    <select id="employee">
       <option value="">جاري تحميل الأسماء...</option>
     </select>
   </div>
 
   <div class="form-group">
-    <label for="pin">الرمز السري (PIN):</label>
-    <input type="password" id="pin" placeholder="أدخل الرمز السري الخاص بك" maxlength="6">
+    <label for="deviceId">معرّف الهاتف الثابت (Device ID):</label>
+    <input type="text" id="deviceId" readonly placeholder="جاري قراءة معرّف الجهاز...">
   </div>
 
   <div class="form-group">
@@ -105,36 +113,40 @@
 <script>
   const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyrNlSdWmNdiXO7MWmjGTm-rCd-pr-DU2p_vlRVDv2k8Yd8_Rlc79elW4qX0IIrMkymxA/exec"; 
 
-  function initTheme() {
-    const savedTheme = localStorage.getItem('theme') || 'dark';
-    document.documentElement.setAttribute('data-theme', savedTheme);
-  }
-  initTheme();
-
-  // جلب أو توليد معرف جهاز ثابت
-  function getDeviceId() {
-    let devId = localStorage.getItem("app_device_id");
+  // 1. إنشاء و قراءة معرّف الجهاز الثابت محلياً
+  function getOrCreatePersistentDeviceId() {
+    let devId = localStorage.getItem("permanent_device_id");
     if (!devId) {
-      devId = "DEV_" + Math.random().toString(36).substring(2, 9) + "_" + Date.now().toString(36);
-      localStorage.setItem("app_device_id", devId);
+      devId = 'PWA_' + Math.random().toString(36).substring(2, 9) + '_' + Date.now().toString(36);
+      localStorage.setItem("permanent_device_id", devId);
     }
+    document.getElementById("deviceId").value = devId;
     return devId;
   }
 
-  // ملء الـ PIN تلقائياً إذا كان محفوظاً للموظف
-  function onEmployeeSelect() {
-    const empName = document.getElementById("employee").value;
-    if (empName) {
-      const savedPin = localStorage.getItem("pin_" + empName);
-      if (savedPin) {
-        document.getElementById("pin").value = savedPin;
-      } else {
-        document.getElementById("pin").value = "";
-      }
+  getOrCreatePersistentDeviceId();
+
+  // 2. إتاحة خيار تثبيت التطبيق PWA
+  let deferredPrompt;
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    document.getElementById('btnInstall').style.display = 'block';
+  });
+
+  function installApp() {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then((choiceResult) => {
+        if (choiceResult.outcome === 'accepted') {
+          document.getElementById('btnInstall').style.display = 'none';
+        }
+        deferredPrompt = null;
+      });
     }
   }
 
-  // 1. جلب الأسماء
+  // 3. جلب قائمة الموظفين من الشيت
   function fetchEmployees() {
     const select = document.getElementById("employee");
     select.innerHTML = '<option value="">جاري تحميل الأسماء...</option>';
@@ -170,10 +182,10 @@
 
   fetchEmployees();
 
-  // 2. تسجيل الحضور
+  // 4. تسجيل الحضور وإرسال البيانات
   function registerAttendance() {
     const employee = document.getElementById("employee").value;
-    const pin = document.getElementById("pin").value;
+    const deviceId = document.getElementById("deviceId").value.trim();
     const site = document.getElementById("site").value;
     const statusDiv = document.getElementById("status");
     const btn = document.getElementById("btnSubmit");
@@ -183,21 +195,14 @@
       return;
     }
 
-    if (!pin) {
-      alert("يرجى أدخال الرمز السري (PIN)");
-      return;
-    }
-
     btn.disabled = true;
     statusDiv.className = "status-loading";
-    statusDiv.innerHTML = "⏳ جاري التحقق من الـ PIN والموقع...";
-
-    const deviceId = getDeviceId();
+    statusDiv.innerHTML = "⏳ جاري التحقق من الموقع وجهاز الموظف...";
 
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition((position) => {
         const location = position.coords.latitude + "," + position.coords.longitude;
-        statusDiv.innerHTML = "📡 جاري تسجيل الحضور...";
+        statusDiv.innerHTML = "📡 جاري إرسال البيانات...";
 
         const callbackName = 'handleRegisterResponse_' + Math.round(100000 * Math.random());
 
@@ -208,8 +213,6 @@
           btn.disabled = false;
 
           if (response.status === "success") {
-            // حفظ الـ PIN محلياً للتسجيل السهل المرة القادمة
-            localStorage.setItem("pin_" + employee, pin);
             statusDiv.className = "status-success";
             statusDiv.innerHTML = response.message;
           } else {
@@ -221,7 +224,6 @@
         const params = new URLSearchParams({
           action: "register",
           employee_name: employee,
-          pin: pin,
           site: site,
           location: location,
           device_id: deviceId,
@@ -234,7 +236,7 @@
         script.onerror = function() {
           btn.disabled = false;
           statusDiv.className = "status-error";
-          statusDiv.innerHTML = "❌ تعذر الاتصال بالخادم، يرجى المحاولة مجدداً.";
+          statusDiv.innerHTML = "❌ تعذر الاتصال بالخادم، يرجى المحاولة لاحقاً.";
         };
 
         document.body.appendChild(script);
