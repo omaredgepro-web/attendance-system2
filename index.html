@@ -142,6 +142,7 @@
       font-weight: 500;
       text-align: center;
       min-height: 24px;
+      line-height: 1.5;
     }
 
     .status-success { color: #10b981; }
@@ -200,7 +201,7 @@
 
   initTheme();
 
-  // جلب الأسماء بأسلوب JSONP ليعمل على الموبايل والشبكات بدون حظر
+  // جلب الأسماء من ورقة Employee
   function fetchEmployees() {
     const select = document.getElementById("employee");
     select.innerHTML = '<option value="">جاري تحميل الأسماء...</option>';
@@ -229,7 +230,7 @@
 
     const script = document.createElement('script');
     script.id = 'jsonp_script';
-    script.src = SCRIPT_URL + '?callback=' + callbackName;
+    script.src = SCRIPT_URL + '?action=getEmployees&callback=' + callbackName;
     script.onerror = function() {
       select.innerHTML = '<option value="">تعذر تحميل الأسماء (تأكد من الشبكة)</option>';
     };
@@ -238,7 +239,7 @@
 
   fetchEmployees();
 
-  // دالة تسجيل الحضور
+  // دالة تسجيل الحضور التفاعلية
   async function registerAttendance() {
     const employee = document.getElementById("employee").value;
     const site = document.getElementById("site").value;
@@ -268,38 +269,48 @@
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(async (position) => {
         const location = position.coords.latitude + "," + position.coords.longitude;
-        statusDiv.innerHTML = "📡 جاري إرسال والتحقق من البيانات...";
+        statusDiv.innerHTML = "📡 جاري التحقق وتسجيل الحضور...";
 
-        try {
-          const formData = new URLSearchParams();
-          formData.append("employee_name", employee);
-          formData.append("site", site);
-          formData.append("location", location);
-          formData.append("device_id", deviceId);
+        const callbackName = 'handleRegisterResponse_' + Math.round(100000 * Math.random());
 
-          await fetch(SCRIPT_URL, {
-            method: "POST",
-            mode: "no-cors",
-            headers: {
-              "Content-Type": "application/x-www-form-urlencoded"
-            },
-            body: formData.toString()
-          });
-
-          statusDiv.className = "status-success";
-          statusDiv.innerHTML = "✅ تم إرسال تسجيل الحضور بنجاح!";
-
-        } catch (postError) {
-          console.error("Fetch Error:", postError);
-          statusDiv.className = "status-error";
-          statusDiv.innerHTML = "❌ حدث خطأ أثناء الاتصال بالخادم.";
-        } finally {
+        window[callbackName] = function(response) {
+          delete window[callbackName];
+          const oldScript = document.getElementById('jsonp_reg_script');
+          if (oldScript) document.body.removeChild(oldScript);
           btn.disabled = false;
-        }
+
+          if (response.status === "success") {
+            statusDiv.className = "status-success";
+            statusDiv.innerHTML = response.message;
+          } else {
+            statusDiv.className = "status-error";
+            statusDiv.innerHTML = response.message;
+          }
+        };
+
+        const params = new URLSearchParams({
+          action: "register",
+          employee_name: employee,
+          site: site,
+          location: location,
+          device_id: deviceId,
+          callback: callbackName
+        });
+
+        const script = document.createElement('script');
+        script.id = 'jsonp_reg_script';
+        script.src = SCRIPT_URL + "?" + params.toString();
+        script.onerror = function() {
+          btn.disabled = false;
+          statusDiv.className = "status-error";
+          statusDiv.innerHTML = "❌ تعذر الاتصال بالخادم، يرجى المحاولة مجدداً.";
+        };
+
+        document.body.appendChild(script);
 
       }, (error) => {
         statusDiv.className = "status-error";
-        statusDiv.innerHTML = "❌ يرجى تفعيل الـ GPS والسماح للوصول إلى موقعك!";
+        statusDiv.innerHTML = "❌ يرجى تفعيل الـ GPS والسماح بالوصول لموقعك!";
         btn.disabled = false;
       }, { enableHighAccuracy: true, timeout: 10000 });
     } else {
