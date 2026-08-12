@@ -9,28 +9,31 @@
     :root {
       --bg-color: #f4f7f6;
       --card-bg: #ffffff;
-      --text-color: #0e13a4;
+      --text-color: #2c3e50;
       --subtext-color: #7f8c8d;
       --input-bg: #f9fbfb;
       --border-color: #e2e8f0;
       --primary-color: #10b981;
       --primary-hover: #059669;
-      --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+      --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
     }
 
     [data-theme="dark"] {
-      --bg-color: #661C1E;
-      --card-bg: #CD7A41;
-      --text-color: #661C1E;
-      --subtext-color: #661C1E;
-      --input-bg: #f5f8fc;
+      --bg-color: #0f172a;
+      --card-bg: #1e293b;
+      --text-color: #f8fafc;
+      --subtext-color: #94a3b8;
+      --input-bg: #0f172a;
       --border-color: #334155;
-      --primary-color: #661C1E;
-      --primary-hover: #f00606;
+      --primary-color: #10b981;
+      --primary-hover: #34d399;
       --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
     }
 
-    * { box-sizing: border-box; transition: background-color 0.3s, color 0.3s; }
+    * {
+      box-sizing: border-box;
+      transition: background-color 0.3s, color 0.3s;
+    }
 
     body {
       font-family: 'Tajawal', sans-serif;
@@ -61,9 +64,27 @@
       margin-bottom: 25px;
     }
 
-    h2 { margin: 0; font-size: 22px; font-weight: 700; }
+    h2 {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 700;
+    }
 
-    .form-group { margin-bottom: 20px; text-align: right; }
+    .theme-toggle {
+      background: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--text-color);
+      padding: 8px 12px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 14px;
+      font-family: 'Tajawal', sans-serif;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+      text-align: right;
+    }
 
     label {
       display: block;
@@ -79,12 +100,15 @@
       border-radius: 12px;
       border: 1px solid var(--border-color);
       background-color: var(--input-bg);
-      color: #1e293b;
+      color: var(--text-color);
       font-size: 15px;
       font-family: 'Tajawal', sans-serif;
       outline: none;
       cursor: pointer;
-      font-weight: bold;
+    }
+
+    select:focus {
+      border-color: var(--primary-color);
     }
 
     .btn-submit {
@@ -99,42 +123,40 @@
       font-weight: 700;
       font-family: 'Tajawal', sans-serif;
       cursor: pointer;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
     }
 
-    .btn-submit:disabled { background-color: #94a3b8; cursor: not-allowed; }
+    .btn-submit:hover {
+      background-color: var(--primary-hover);
+    }
+
+    .btn-submit:disabled {
+      background-color: #94a3b8;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
 
     #status {
-      margin-top: 15px;
+      margin-top: 20px;
       font-size: 14px;
-      font-weight: bold;
+      font-weight: 500;
       text-align: center;
       min-height: 24px;
+      line-height: 1.5;
     }
 
-    .device-info {
-      margin-top: 15px;
-      padding: 10px;
-      background: rgba(0,0,0,0.05);
-      border-radius: 8px;
-      font-size: 11px;
-      text-align: center;
-      word-break: break-all;
-      direction: ltr;
-      color: var(--text-color);
-    }
-
-    .card .header img { width: 45%; border-radius: 12px; }
     .status-success { color: #10b981; }
     .status-error { color: #ef4444; }
     .status-loading { color: #3b82f6; }
   </style>
+  <script src="https://openfpcdn.io/fingerprintjs/v3/i.js"></script>
 </head>
 <body>
 
 <div class="card">
   <div class="header">
-    <h2>LOG IN</h2>
-    <img src="images (1).jpg" alt="Logo">
+    <h2>📍 تسجيل الحضور</h2>
+    <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙 داكن</button>
   </div>
 
   <div class="form-group">
@@ -154,52 +176,32 @@
 
   <button class="btn-submit" id="btnSubmit" onclick="registerAttendance()">تسجيل الحضور الآن</button>
   <div id="status"></div>
-  <div class="device-info" id="deviceBox">جاري التعرف على الجهاز...</div>
 </div>
 
 <script>
   const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyrNlSdWmNdiXO7MWmjGTm-rCd-pr-DU2p_vlRVDv2k8Yd8_Rlc79elW4qX0IIrMkymxA/exec"; 
 
-  // دالة التعامل مع الكوكيز كنسخة احتياطية للـ LocalStorage
-  function setCookie(name, value, days) {
-    let expires = "";
-    if (days) {
-      let date = new Date();
-      date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-      expires = "; expires=" + date.toUTCString();
-    }
-    document.cookie = name + "=" + (value || "") + expires + "; path=/; SameSite=Lax";
+  function initTheme() {
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    updateThemeBtnText(savedTheme);
   }
 
-  function getCookie(name) {
-    let nameEQ = name + "=";
-    let ca = document.cookie.split(';');
-    for (let i = 0; i < ca.length; i++) {
-      let c = ca[i];
-      while (c.charAt(0) == ' ') c = c.substring(1, c.length);
-      if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
-    }
-    return null;
+  function toggleTheme() {
+    const currentTheme = document.documentElement.getAttribute('data-theme');
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('theme', newTheme);
+    updateThemeBtnText(newTheme);
   }
 
-  // الحصول على Device ID موحد (LocalStorage + Cookie)
-  function getDeviceId() {
-    let localId = localStorage.getItem("app_device_id") || getCookie("app_device_id");
-
-    if (!localId || localId === "Unknown_Device" || localId.trim() === "") {
-      localId = "DEV_" + Math.random().toString(36).substring(2, 9) + "_" + Date.now().toString(36);
-    }
-
-    localStorage.setItem("app_device_id", localId);
-    setCookie("app_device_id", localId, 365);
-    return localId;
+  function updateThemeBtnText(theme) {
+    document.getElementById('themeBtn').innerText = theme === 'dark' ? '☀️ فاتح' : '🌙 داكن';
   }
 
-  // عرض الـ Device ID للمستخدم
-  const currentDeviceId = getDeviceId();
-  document.getElementById("deviceBox").innerText = "Device ID: " + currentDeviceId;
+  initTheme();
 
-  // جلب الأسماء
+  // 1. جلب الأسماء
   function fetchEmployees() {
     const select = document.getElementById("employee");
     select.innerHTML = '<option value="">جاري تحميل الأسماء...</option>';
@@ -208,6 +210,9 @@
     
     window[callbackName] = function(employees) {
       delete window[callbackName];
+      const oldScript = document.getElementById('jsonp_script');
+      if (oldScript && oldScript.parentNode) oldScript.parentNode.removeChild(oldScript);
+
       if (Array.isArray(employees) && employees.length > 0) {
         select.innerHTML = '<option value="">اختر اسمك من القائمة...</option>';
         employees.forEach(emp => {
@@ -222,13 +227,43 @@
     };
 
     const script = document.createElement('script');
+    script.id = 'jsonp_script';
     script.src = SCRIPT_URL + '?action=getEmployees&callback=' + callbackName;
+    script.onerror = function() {
+      select.innerHTML = '<option value="">تعذر تحميل الأسماء (تأكد من الشبكة)</option>';
+    };
     document.body.appendChild(script);
   }
 
   fetchEmployees();
 
-  // تسجيل الحضور
+  // 2. دالة الحصول على Device ID موثوقة ومضمونة 100%
+  async function getDeviceId() {
+    let localId = localStorage.getItem("app_device_id");
+
+    if (localId && localId !== "Unknown_Device") {
+      return localId;
+    }
+
+    try {
+      if (window.FingerprintJS) {
+        const fp = await FingerprintJS.load();
+        const result = await fp.get();
+        if (result && result.visitorId) {
+          localStorage.setItem("app_device_id", result.visitorId);
+          return result.visitorId;
+        }
+      }
+    } catch (e) {
+      console.log("FingerprintJS Error: ", e);
+    }
+    
+    localId = "DEV_" + Math.random().toString(36).substring(2, 9) + "_" + Date.now().toString(36);
+    localStorage.setItem("app_device_id", localId);
+    return localId;
+  }
+
+  // 3. دالة تسجيل الحضور
   async function registerAttendance() {
     const employee = document.getElementById("employee").value;
     const site = document.getElementById("site").value;
@@ -242,9 +277,9 @@
 
     btn.disabled = true;
     statusDiv.className = "status-loading";
-    statusDiv.innerHTML = "⏳ جاري التحقق من الموقع...";
+    statusDiv.innerHTML = "⏳ جاري التحقق من معرّف الجهاز والموقع...";
 
-    const deviceId = getDeviceId();
+    const deviceId = await getDeviceId();
 
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition((position) => {
@@ -255,6 +290,8 @@
 
         window[callbackName] = function(response) {
           delete window[callbackName];
+          const oldScript = document.getElementById('jsonp_reg_script');
+          if (oldScript && oldScript.parentNode) oldScript.parentNode.removeChild(oldScript);
           btn.disabled = false;
 
           if (response.status === "success") {
@@ -276,7 +313,14 @@
         });
 
         const script = document.createElement('script');
+        script.id = 'jsonp_reg_script';
         script.src = SCRIPT_URL + "?" + params.toString();
+        script.onerror = function() {
+          btn.disabled = false;
+          statusDiv.className = "status-error";
+          statusDiv.innerHTML = "❌ تعذر الاتصال بالخادم، يرجى المحاولة مجدداً.";
+        };
+
         document.body.appendChild(script);
 
       }, (error) => {
