@@ -14,8 +14,8 @@
       --input-bg: #f9fbfb;
       --border-color: #e2e8f0;
       --primary-color: #10b981;
-      --primary-hover: #c0db28;
-      --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+      --primary-hover: #059669;
+      --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
     }
 
     [data-theme="dark"] {
@@ -30,10 +30,7 @@
       --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
     }
 
-    * {
-      box-sizing: border-box;
-      transition: background-color 0.3s, color 0.3s;
-    }
+    * { box-sizing: border-box; transition: background-color 0.3s, color 0.3s; }
 
     body {
       font-family: 'Tajawal', sans-serif;
@@ -64,16 +61,9 @@
       margin-bottom: 25px;
     }
 
-    h2 {
-      margin: 0;
-      font-size: 22px;
-      font-weight: 700;
-    }
+    h2 { margin: 0; font-size: 22px; font-weight: 700; }
 
-    .form-group {
-      margin-bottom: 20px;
-      text-align: right;
-    }
+    .form-group { margin-bottom: 20px; text-align: right; }
 
     label {
       display: block;
@@ -89,15 +79,12 @@
       border-radius: 12px;
       border: 1px solid var(--border-color);
       background-color: var(--input-bg);
-      color: var(--text-color);
+      color: #1e293b;
       font-size: 15px;
       font-family: 'Tajawal', sans-serif;
       outline: none;
       cursor: pointer;
-    }
-
-    select:focus {
-      border-color: var(--primary-color);
+      font-weight: bold;
     }
 
     .btn-submit {
@@ -112,33 +99,31 @@
       font-weight: 700;
       font-family: 'Tajawal', sans-serif;
       cursor: pointer;
-      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
     }
 
-    .btn-submit:hover {
-      background-color: var(--primary-hover);
-    }
-
-    .btn-submit:disabled {
-      background-color: #94a3b8;
-      cursor: not-allowed;
-      box-shadow: none;
-    }
+    .btn-submit:disabled { background-color: #94a3b8; cursor: not-allowed; }
 
     #status {
-      margin-top: 20px;
+      margin-top: 15px;
       font-size: 14px;
-      font-weight: 500;
+      font-weight: bold;
       text-align: center;
       min-height: 24px;
-      line-height: 1.5;
     }
 
-    .card .header img {
-      width: 50%;
-      border-radius: 15px;
+    .device-info {
+      margin-top: 15px;
+      padding: 10px;
+      background: rgba(0,0,0,0.05);
+      border-radius: 8px;
+      font-size: 11px;
+      text-align: center;
+      word-break: break-all;
+      direction: ltr;
+      color: var(--text-color);
     }
 
+    .card .header img { width: 45%; border-radius: 12px; }
     .status-success { color: #10b981; }
     .status-error { color: #ef4444; }
     .status-loading { color: #3b82f6; }
@@ -149,7 +134,7 @@
 <div class="card">
   <div class="header">
     <h2>LOG IN</h2>
-    <img src="https://raw.githubusercontent.com/omaredgepro-web/attendance-system2/66fd524010cc330f37a65a93da6f9beef1a9dd4b/img/images%20(1).jpg" alt="">
+    <img src="images (1).jpg" alt="Logo">
   </div>
 
   <div class="form-group">
@@ -169,19 +154,52 @@
 
   <button class="btn-submit" id="btnSubmit" onclick="registerAttendance()">تسجيل الحضور الآن</button>
   <div id="status"></div>
+  <div class="device-info" id="deviceBox">جاري التعرف على الجهاز...</div>
 </div>
 
 <script>
   const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyrNlSdWmNdiXO7MWmjGTm-rCd-pr-DU2p_vlRVDv2k8Yd8_Rlc79elW4qX0IIrMkymxA/exec"; 
 
-  function initTheme() {
-    const savedTheme = localStorage.getItem('theme') || 'dark';
-    document.documentElement.setAttribute('data-theme', savedTheme);
+  // دالة التعامل مع الكوكيز كنسخة احتياطية للـ LocalStorage
+  function setCookie(name, value, days) {
+    let expires = "";
+    if (days) {
+      let date = new Date();
+      date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+      expires = "; expires=" + date.toUTCString();
+    }
+    document.cookie = name + "=" + (value || "") + expires + "; path=/; SameSite=Lax";
   }
 
-  initTheme();
+  function getCookie(name) {
+    let nameEQ = name + "=";
+    let ca = document.cookie.split(';');
+    for (let i = 0; i < ca.length; i++) {
+      let c = ca[i];
+      while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+      if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+    }
+    return null;
+  }
 
-  // 1. جلب الأسماء
+  // الحصول على Device ID موحد (LocalStorage + Cookie)
+  function getDeviceId() {
+    let localId = localStorage.getItem("app_device_id") || getCookie("app_device_id");
+
+    if (!localId || localId === "Unknown_Device" || localId.trim() === "") {
+      localId = "DEV_" + Math.random().toString(36).substring(2, 9) + "_" + Date.now().toString(36);
+    }
+
+    localStorage.setItem("app_device_id", localId);
+    setCookie("app_device_id", localId, 365);
+    return localId;
+  }
+
+  // عرض الـ Device ID للمستخدم
+  const currentDeviceId = getDeviceId();
+  document.getElementById("deviceBox").innerText = "Device ID: " + currentDeviceId;
+
+  // جلب الأسماء
   function fetchEmployees() {
     const select = document.getElementById("employee");
     select.innerHTML = '<option value="">جاري تحميل الأسماء...</option>';
@@ -190,9 +208,6 @@
     
     window[callbackName] = function(employees) {
       delete window[callbackName];
-      const oldScript = document.getElementById('jsonp_script');
-      if (oldScript && oldScript.parentNode) oldScript.parentNode.removeChild(oldScript);
-
       if (Array.isArray(employees) && employees.length > 0) {
         select.innerHTML = '<option value="">اختر اسمك من القائمة...</option>';
         employees.forEach(emp => {
@@ -207,32 +222,13 @@
     };
 
     const script = document.createElement('script');
-    script.id = 'jsonp_script';
     script.src = SCRIPT_URL + '?action=getEmployees&callback=' + callbackName;
-    script.onerror = function() {
-      select.innerHTML = '<option value="">تعذر تحميل الأسماء (تأكد من الشبكة)</option>';
-    };
     document.body.appendChild(script);
   }
 
   fetchEmployees();
 
-  // 2. دالة توليد وتثبيت Device ID دائم للمتصفح
-  function getDeviceId() {
-    let localId = localStorage.getItem("app_device_id");
-
-    // لو الجهاز متسجل قبل كده يتم اعتماده فوراً لمنع تغير المعرّف
-    if (localId && localId !== "Unknown_Device" && localId.trim() !== "") {
-      return localId;
-    }
-
-    // إنشاء معرّف فريد وتخزينه في localStorage
-    localId = "DEV_" + Math.random().toString(36).substring(2, 9) + "_" + Date.now().toString(36);
-    localStorage.setItem("app_device_id", localId);
-    return localId;
-  }
-
-  // 3. دالة تسجيل الحضور
+  // تسجيل الحضور
   async function registerAttendance() {
     const employee = document.getElementById("employee").value;
     const site = document.getElementById("site").value;
@@ -246,7 +242,7 @@
 
     btn.disabled = true;
     statusDiv.className = "status-loading";
-    statusDiv.innerHTML = "⏳ جاري التحقق من معرّف الجهاز والموقع...";
+    statusDiv.innerHTML = "⏳ جاري التحقق من الموقع...";
 
     const deviceId = getDeviceId();
 
@@ -259,8 +255,6 @@
 
         window[callbackName] = function(response) {
           delete window[callbackName];
-          const oldScript = document.getElementById('jsonp_reg_script');
-          if (oldScript && oldScript.parentNode) oldScript.parentNode.removeChild(oldScript);
           btn.disabled = false;
 
           if (response.status === "success") {
@@ -282,14 +276,7 @@
         });
 
         const script = document.createElement('script');
-        script.id = 'jsonp_reg_script';
         script.src = SCRIPT_URL + "?" + params.toString();
-        script.onerror = function() {
-          btn.disabled = false;
-          statusDiv.className = "status-error";
-          statusDiv.innerHTML = "❌ تعذر الاتصال بالخادم، يرجى المحاولة مجدداً.";
-        };
-
         document.body.appendChild(script);
 
       }, (error) => {
