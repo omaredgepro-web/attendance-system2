@@ -166,7 +166,7 @@
   </div>
 
   <div class="form-group">
-    <label for="site">الموقع / :</label>
+    <label for="site">الموقع:</label>
     <select id="site">
       <option value="From Site">Site</option>
       <option value="From Home">Home</option>
@@ -200,7 +200,7 @@
 
   initTheme();
 
-  // جلب الأسماء باستخدام JSONP (متوافق 100% مع الموبايل، الشبكات، الباقات والـ Wi-Fi)
+  // جلب الأسماء بأسلوب JSONP ليعمل على الموبايل والشبكات بدون حظر
   function fetchEmployees() {
     const select = document.getElementById("employee");
     select.innerHTML = '<option value="">جاري تحميل الأسماء...</option>';
@@ -209,8 +209,9 @@
     
     window[callbackName] = function(employees) {
       delete window[callbackName];
-      if (document.getElementById('jsonp_script')) {
-        document.body.removeChild(document.getElementById('jsonp_script'));
+      const oldScript = document.getElementById('jsonp_script');
+      if (oldScript) {
+        document.body.removeChild(oldScript);
       }
 
       if (Array.isArray(employees) && employees.length > 0) {
@@ -270,19 +271,19 @@
         statusDiv.innerHTML = "📡 جاري إرسال والتحقق من البيانات...";
 
         try {
-          const payload = {
-            employee_name: employee,
-            site: site,
-            location: location,
-            device_id: deviceId
-          };
+          const formData = new URLSearchParams();
+          formData.append("employee_name", employee);
+          formData.append("site", site);
+          formData.append("location", location);
+          formData.append("device_id", deviceId);
 
-          // إرسال كـ text/plain وبدون CORS يضمن وصول البيانات بدون اعتراض من أي متصفح
           await fetch(SCRIPT_URL, {
             method: "POST",
             mode: "no-cors",
-            headers: { "Content-Type": "text/plain" },
-            body: JSON.stringify(payload)
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded"
+            },
+            body: formData.toString()
           });
 
           statusDiv.className = "status-success";
