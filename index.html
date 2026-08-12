@@ -201,7 +201,7 @@
 
   initTheme();
 
-  // جلب الأسماء من ورقة Employee
+  // 1. جلب أسماء الموظفين
   function fetchEmployees() {
     const select = document.getElementById("employee");
     select.innerHTML = '<option value="">جاري تحميل الأسماء...</option>';
@@ -211,9 +211,7 @@
     window[callbackName] = function(employees) {
       delete window[callbackName];
       const oldScript = document.getElementById('jsonp_script');
-      if (oldScript) {
-        document.body.removeChild(oldScript);
-      }
+      if (oldScript && oldScript.parentNode) oldScript.parentNode.removeChild(oldScript);
 
       if (Array.isArray(employees) && employees.length > 0) {
         select.innerHTML = '<option value="">اختر اسمك من القائمة...</option>';
@@ -239,7 +237,29 @@
 
   fetchEmployees();
 
-  // دالة تسجيل الحضور التفاعلية
+  // 2. دالة الحصول على Device ID موثوقة
+  async function getDeviceId() {
+    try {
+      if (window.FingerprintJS) {
+        const fp = await FingerprintJS.load();
+        const result = await fp.get();
+        if (result && result.visitorId) {
+          return result.visitorId;
+        }
+      }
+    } catch (e) {
+      console.log("FingerprintJS error: ", e);
+    }
+    
+    let localId = localStorage.getItem("app_device_id");
+    if (!localId) {
+      localId = "DEV_" + Math.random().toString(36).substring(2, 10) + "_" + Date.now().toString(36);
+      localStorage.setItem("app_device_id", localId);
+    }
+    return localId;
+  }
+
+  // 3. دالة تسجيل الحضور
   async function registerAttendance() {
     const employee = document.getElementById("employee").value;
     const site = document.getElementById("site").value;
@@ -253,30 +273,21 @@
 
     btn.disabled = true;
     statusDiv.className = "status-loading";
-    statusDiv.innerHTML = "⏳ جاري جلب اللوكيشن وهويّة الجهاز...";
+    statusDiv.innerHTML = "⏳ جاري التحقق من معرّف الجهاز والموقع...";
 
-    let deviceId = "Unknown_Device";
-    try {
-      if (window.FingerprintJS) {
-        const fp = await FingerprintJS.load();
-        const result = await fp.get();
-        deviceId = result.visitorId;
-      }
-    } catch (e) {
-      deviceId = window.navigator.userAgent.replace(/[^a-zA-Z0-9]/g, '').slice(-15);
-    }
+    const deviceId = await getDeviceId();
 
     if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(async (position) => {
+      navigator.geolocation.getCurrentPosition((position) => {
         const location = position.coords.latitude + "," + position.coords.longitude;
-        statusDiv.innerHTML = "📡 جاري التحقق وتسجيل الحضور...";
+        statusDiv.innerHTML = "📡 جاري تسجيل الحضور...";
 
         const callbackName = 'handleRegisterResponse_' + Math.round(100000 * Math.random());
 
         window[callbackName] = function(response) {
           delete window[callbackName];
           const oldScript = document.getElementById('jsonp_reg_script');
-          if (oldScript) document.body.removeChild(oldScript);
+          if (oldScript && oldScript.parentNode) oldScript.parentNode.removeChild(oldScript);
           btn.disabled = false;
 
           if (response.status === "success") {
