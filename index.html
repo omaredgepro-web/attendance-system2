@@ -1,3 +1,10 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>نظام تسجيل الحضور اليومي</title>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg-color: #f4f7f6;
@@ -63,17 +70,6 @@
       font-weight: 700;
     }
 
-    .theme-toggle {
-      background: transparent;
-      border: 1px solid var(--border-color);
-      color: var(--text-color);
-      padding: 8px 12px;
-      border-radius: 20px;
-      cursor: pointer;
-      font-size: 14px;
-      font-family: 'Tajawal', sans-serif;
-    }
-
     .form-group {
       margin-bottom: 20px;
       text-align: right;
@@ -137,21 +133,176 @@
       min-height: 24px;
       line-height: 1.5;
     }
-    .card .header img{
-    width: 50%;
-    border-radius: 15px;
+
+    .card .header img {
+      width: 50%;
+      border-radius: 15px;
     }
 
     .status-success { color: #10b981; }
     .status-error { color: #ef4444; }
     .status-loading { color: #3b82f6; }
   </style>
-  <script src="https://openfpcdn.io/fingerprintjs/v3/i.js"></script>
 </head>
 <body>
 
 <div class="card">
   <div class="header">
     <h2>LOG IN</h2>
-    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTQWRngBxbivIyvtXpDf5llmZxK6iRZFyp6-_1pO5opOdZV89m5D56OQus&s=10" alt="" >
+    <img src="images (1).jpg" alt="">
   </div>
+
+  <div class="form-group">
+    <label for="employee">اسم الموظف:</label>
+    <select id="employee">
+      <option value="">جاري تحميل الأسماء...</option>
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label for="site">الموقع:</label>
+    <select id="site">
+      <option value="From Site">Site</option>
+      <option value="From Home">Home</option>
+    </select>
+  </div>
+
+  <button class="btn-submit" id="btnSubmit" onclick="registerAttendance()">تسجيل الحضور الآن</button>
+  <div id="status"></div>
+</div>
+
+<script>
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyrNlSdWmNdiXO7MWmjGTm-rCd-pr-DU2p_vlRVDv2k8Yd8_Rlc79elW4qX0IIrMkymxA/exec"; 
+
+  function initTheme() {
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+  }
+
+  initTheme();
+
+  // 1. جلب الأسماء
+  function fetchEmployees() {
+    const select = document.getElementById("employee");
+    select.innerHTML = '<option value="">جاري تحميل الأسماء...</option>';
+
+    const callbackName = 'handleEmployeesResponse_' + Math.round(100000 * Math.random());
+    
+    window[callbackName] = function(employees) {
+      delete window[callbackName];
+      const oldScript = document.getElementById('jsonp_script');
+      if (oldScript && oldScript.parentNode) oldScript.parentNode.removeChild(oldScript);
+
+      if (Array.isArray(employees) && employees.length > 0) {
+        select.innerHTML = '<option value="">اختر اسمك من القائمة...</option>';
+        employees.forEach(emp => {
+          const opt = document.createElement('option');
+          opt.value = emp;
+          opt.innerText = emp;
+          select.appendChild(opt);
+        });
+      } else {
+        select.innerHTML = '<option value="">لا توجد أسماء في شيت Employee</option>';
+      }
+    };
+
+    const script = document.createElement('script');
+    script.id = 'jsonp_script';
+    script.src = SCRIPT_URL + '?action=getEmployees&callback=' + callbackName;
+    script.onerror = function() {
+      select.innerHTML = '<option value="">تعذر تحميل الأسماء (تأكد من الشبكة)</option>';
+    };
+    document.body.appendChild(script);
+  }
+
+  fetchEmployees();
+
+  // 2. دالة توليد وتثبيت Device ID دائم للمتصفح
+  function getDeviceId() {
+    let localId = localStorage.getItem("app_device_id");
+
+    // لو الجهاز متسجل قبل كده يتم اعتماده فوراً لمنع تغير المعرّف
+    if (localId && localId !== "Unknown_Device" && localId.trim() !== "") {
+      return localId;
+    }
+
+    // إنشاء معرّف فريد وتخزينه في localStorage
+    localId = "DEV_" + Math.random().toString(36).substring(2, 9) + "_" + Date.now().toString(36);
+    localStorage.setItem("app_device_id", localId);
+    return localId;
+  }
+
+  // 3. دالة تسجيل الحضور
+  async function registerAttendance() {
+    const employee = document.getElementById("employee").value;
+    const site = document.getElementById("site").value;
+    const statusDiv = document.getElementById("status");
+    const btn = document.getElementById("btnSubmit");
+
+    if (!employee) {
+      alert("يرجى اختيار اسم الموظف أولاً");
+      return;
+    }
+
+    btn.disabled = true;
+    statusDiv.className = "status-loading";
+    statusDiv.innerHTML = "⏳ جاري التحقق من معرّف الجهاز والموقع...";
+
+    const deviceId = getDeviceId();
+
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition((position) => {
+        const location = position.coords.latitude + "," + position.coords.longitude;
+        statusDiv.innerHTML = "📡 جاري تسجيل الحضور...";
+
+        const callbackName = 'handleRegisterResponse_' + Math.round(100000 * Math.random());
+
+        window[callbackName] = function(response) {
+          delete window[callbackName];
+          const oldScript = document.getElementById('jsonp_reg_script');
+          if (oldScript && oldScript.parentNode) oldScript.parentNode.removeChild(oldScript);
+          btn.disabled = false;
+
+          if (response.status === "success") {
+            statusDiv.className = "status-success";
+            statusDiv.innerHTML = response.message;
+          } else {
+            statusDiv.className = "status-error";
+            statusDiv.innerHTML = response.message;
+          }
+        };
+
+        const params = new URLSearchParams({
+          action: "register",
+          employee_name: employee,
+          site: site,
+          location: location,
+          device_id: deviceId,
+          callback: callbackName
+        });
+
+        const script = document.createElement('script');
+        script.id = 'jsonp_reg_script';
+        script.src = SCRIPT_URL + "?" + params.toString();
+        script.onerror = function() {
+          btn.disabled = false;
+          statusDiv.className = "status-error";
+          statusDiv.innerHTML = "❌ تعذر الاتصال بالخادم، يرجى المحاولة مجدداً.";
+        };
+
+        document.body.appendChild(script);
+
+      }, (error) => {
+        statusDiv.className = "status-error";
+        statusDiv.innerHTML = "❌ يرجى تفعيل الـ GPS والسماح بالوصول لموقعك!";
+        btn.disabled = false;
+      }, { enableHighAccuracy: true, timeout: 10000 });
+    } else {
+      alert("المتصفح لا يدعم تحديد الموقع الجغرافي.");
+      btn.disabled = false;
+    }
+  }
+</script>
+
+</body>
+</html>
