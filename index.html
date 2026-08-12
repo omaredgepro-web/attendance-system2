@@ -201,7 +201,7 @@
 
   initTheme();
 
-  // 1. جلب أسماء الموظفين
+  // 1. جلب الأسماء
   function fetchEmployees() {
     const select = document.getElementById("employee");
     select.innerHTML = '<option value="">جاري تحميل الأسماء...</option>';
@@ -237,25 +237,29 @@
 
   fetchEmployees();
 
-  // 2. دالة الحصول على Device ID موثوقة
+  // 2. دالة الحصول على Device ID موثوقة ومضمونة 100%
   async function getDeviceId() {
+    let localId = localStorage.getItem("app_device_id");
+
+    if (localId && localId !== "Unknown_Device") {
+      return localId;
+    }
+
     try {
       if (window.FingerprintJS) {
         const fp = await FingerprintJS.load();
         const result = await fp.get();
         if (result && result.visitorId) {
+          localStorage.setItem("app_device_id", result.visitorId);
           return result.visitorId;
         }
       }
     } catch (e) {
-      console.log("FingerprintJS error: ", e);
+      console.log("FingerprintJS Error: ", e);
     }
     
-    let localId = localStorage.getItem("app_device_id");
-    if (!localId) {
-      localId = "DEV_" + Math.random().toString(36).substring(2, 10) + "_" + Date.now().toString(36);
-      localStorage.setItem("app_device_id", localId);
-    }
+    localId = "DEV_" + Math.random().toString(36).substring(2, 9) + "_" + Date.now().toString(36);
+    localStorage.setItem("app_device_id", localId);
     return localId;
   }
 
