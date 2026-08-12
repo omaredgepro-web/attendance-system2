@@ -10,29 +10,31 @@
       --bg-color: #f4f7f6;
       --card-bg: #ffffff;
       --text-color: #0e13a4;
-      --subtext-color: #7f8c8d;
+      --subtext-color: #4b5563;
       --input-bg: #f9fbfb;
+      --input-text: #1e293b;
       --border-color: #e2e8f0;
       --primary-color: #10b981;
-      --primary-hover: #c0db28;
+      --primary-hover: #059669;
       --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
     }
 
     [data-theme="dark"] {
-      --bg-color: #661C1E;
-      --card-bg: #CD7A41;
-      --text-color: #661C1E;
-      --subtext-color: #661C1E;
-      --input-bg: #f5f8fc;
-      --border-color: #334155;
-      --primary-color: #661C1E;
-      --primary-hover: #f00606;
-      --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+      --bg-color: #3b0e10;
+      --card-bg: #661c1e;
+      --text-color: #ffffff;
+      --subtext-color: #f1f5f9;
+      --input-bg: #ffffff;
+      --input-text: #1e293b;
+      --border-color: #cd7a41;
+      --primary-color: #cd7a41;
+      --primary-hover: #e28c50;
+      --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
     }
 
     * {
       box-sizing: border-box;
-      transition: background-color 0.3s, color 0.3s;
+      transition: background-color 0.3s, color 0.3s, border-color 0.3s;
     }
 
     body {
@@ -64,6 +66,12 @@
       margin-bottom: 25px;
     }
 
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
     h2 {
       margin: 0;
       font-size: 22px;
@@ -71,13 +79,14 @@
     }
 
     .theme-toggle {
-      background: transparent;
+      background: rgba(255, 255, 255, 0.15);
       border: 1px solid var(--border-color);
       color: var(--text-color);
-      padding: 8px 12px;
+      padding: 8px 14px;
       border-radius: 20px;
       cursor: pointer;
-      font-size: 14px;
+      font-size: 13px;
+      font-weight: bold;
       font-family: 'Tajawal', sans-serif;
     }
 
@@ -100,11 +109,17 @@
       border-radius: 12px;
       border: 1px solid var(--border-color);
       background-color: var(--input-bg);
-      color: var(--text-color);
+      color: var(--input-text);
       font-size: 15px;
       font-family: 'Tajawal', sans-serif;
       outline: none;
       cursor: pointer;
+      font-weight: bold;
+    }
+
+    select option {
+      background-color: #ffffff;
+      color: #1e293b;
     }
 
     select:focus {
@@ -123,7 +138,7 @@
       font-weight: 700;
       font-family: 'Tajawal', sans-serif;
       cursor: pointer;
-      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     }
 
     .btn-submit:hover {
@@ -144,14 +159,17 @@
       min-height: 24px;
       line-height: 1.5;
     }
-    .card .header img{
-    width: 50%;
-    border-radius: 15px;
+
+    .card .header img {
+      width: 50px;
+      height: 50px;
+      object-fit: cover;
+      border-radius: 12px;
     }
 
-    .status-success { color: #10b981; }
-    .status-error { color: #ef4444; }
-    .status-loading { color: #3b82f6; }
+    .status-success { color: #34d399; font-weight: bold; }
+    .status-error { color: #f87171; font-weight: bold; }
+    .status-loading { color: #60a5fa; font-weight: bold; }
   </style>
   <script src="https://openfpcdn.io/fingerprintjs/v3/i.js"></script>
 </head>
@@ -159,9 +177,11 @@
 
 <div class="card">
   <div class="header">
-    <h2>LOG IN</h2>
-    <img src="images (1).jpg
-" alt="" >
+    <div class="header-left">
+      <h2>LOG IN</h2>
+      <img src="img/images (1).jpg" alt="Logo">
+    </div>
+    <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙 داكن</button>
   </div>
 
   <div class="form-group">
@@ -186,6 +206,13 @@
 <script>
   const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyrNlSdWmNdiXO7MWmjGTm-rCd-pr-DU2p_vlRVDv2k8Yd8_Rlc79elW4qX0IIrMkymxA/exec"; 
 
+  function updateThemeBtnText(theme) {
+    const btn = document.getElementById('themeBtn');
+    if (btn) {
+      btn.innerText = theme === 'dark' ? '☀️ فاتح' : '🌙 داكن';
+    }
+  }
+
   function initTheme() {
     const savedTheme = localStorage.getItem('theme') || 'dark';
     document.documentElement.setAttribute('data-theme', savedTheme);
@@ -199,8 +226,6 @@
     localStorage.setItem('theme', newTheme);
     updateThemeBtnText(newTheme);
   }
-
-  
 
   initTheme();
 
@@ -240,7 +265,7 @@
 
   fetchEmployees();
 
-  // 2. دالة الحصول على Device ID موثوقة ومضمونة 100%
+  // 2. دالة الحصول على Device ID موثوقة ومضمونة
   async function getDeviceId() {
     let localId = localStorage.getItem("app_device_id");
 
