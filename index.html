@@ -9,24 +9,24 @@
     :root {
       --bg-color: #f4f7f6;
       --card-bg: #ffffff;
-      --text-color: #2c3e50;
+      --text-color: #0e13a4;
       --subtext-color: #7f8c8d;
       --input-bg: #f9fbfb;
       --border-color: #e2e8f0;
       --primary-color: #10b981;
-      --primary-hover: #059669;
+      --primary-hover: #c0db28;
       --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
     }
 
     [data-theme="dark"] {
-      --bg-color: #0f172a;
-      --card-bg: #1e293b;
-      --text-color: #f8fafc;
-      --subtext-color: #94a3b8;
-      --input-bg: #0f172a;
+      --bg-color: #661C1E;
+      --card-bg: #CD7A41;
+      --text-color: #661C1E;
+      --subtext-color: #661C1E;
+      --input-bg: #f5f8fc;
       --border-color: #334155;
-      --primary-color: #10b981;
-      --primary-hover: #34d399;
+      --primary-color: #661C1E;
+      --primary-hover: #f00606;
       --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
     }
 
@@ -144,6 +144,10 @@
       min-height: 24px;
       line-height: 1.5;
     }
+    .card .header img{
+    width: 50%;
+    border-radius: 15px;
+    }
 
     .status-success { color: #10b981; }
     .status-error { color: #ef4444; }
@@ -155,8 +159,8 @@
 
 <div class="card">
   <div class="header">
-    <h2>📍 تسجيل الحضور</h2>
-    <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙 داكن</button>
+    <h2>LOG IN</h2>
+    <img src="../img/images (1).jpg" alt="" >
   </div>
 
   <div class="form-group">
@@ -195,9 +199,7 @@
     updateThemeBtnText(newTheme);
   }
 
-  function updateThemeBtnText(theme) {
-    document.getElementById('themeBtn').innerText = theme === 'dark' ? '☀️ فاتح' : '🌙 داكن';
-  }
+  
 
   initTheme();
 
