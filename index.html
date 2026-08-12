@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>نظام تسجيل الحضور اليومي</title>
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
-  <style>
+   <style>
     :root {
       --bg-color: #f4f7f6;
       --card-bg: #ffffff;
@@ -14,8 +14,8 @@
       --input-bg: #f9fbfb;
       --border-color: #e2e8f0;
       --primary-color: #10b981;
-      --primary-hover: #059669;
-      --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+      --primary-hover: #c0db28;
+      --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
     }
 
     [data-theme="dark"] {
@@ -30,7 +30,10 @@
       --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
     }
 
-    * { box-sizing: border-box; transition: background-color 0.3s, color 0.3s; }
+    * {
+      box-sizing: border-box;
+      transition: background-color 0.3s, color 0.3s;
+    }
 
     body {
       font-family: 'Tajawal', sans-serif;
@@ -61,9 +64,27 @@
       margin-bottom: 25px;
     }
 
-    h2 { margin: 0; font-size: 22px; font-weight: 700; }
+    h2 {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 700;
+    }
 
-    .form-group { margin-bottom: 20px; text-align: right; }
+    .theme-toggle {
+      background: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--text-color);
+      padding: 8px 12px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 14px;
+      font-family: 'Tajawal', sans-serif;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+      text-align: right;
+    }
 
     label {
       display: block;
@@ -79,12 +100,15 @@
       border-radius: 12px;
       border: 1px solid var(--border-color);
       background-color: var(--input-bg);
-      color: #1e293b;
+      color: var(--text-color);
       font-size: 15px;
       font-family: 'Tajawal', sans-serif;
       outline: none;
       cursor: pointer;
-      font-weight: bold;
+    }
+
+    select:focus {
+      border-color: var(--primary-color);
     }
 
     .btn-submit {
@@ -99,58 +123,46 @@
       font-weight: 700;
       font-family: 'Tajawal', sans-serif;
       cursor: pointer;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
     }
 
-    .btn-submit:disabled { background-color: #94a3b8; cursor: not-allowed; }
+    .btn-submit:hover {
+      background-color: var(--primary-hover);
+    }
+
+    .btn-submit:disabled {
+      background-color: #94a3b8;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
 
     #status {
-      margin-top: 15px;
+      margin-top: 20px;
       font-size: 14px;
-      font-weight: bold;
+      font-weight: 500;
       text-align: center;
       min-height: 24px;
+      line-height: 1.5;
+    }
+    .card .header img{
+    width: 50%;
+    border-radius: 15px;
     }
 
-    .device-info {
-      margin-top: 15px;
-      padding: 10px;
-      background: rgba(0,0,0,0.05);
-      border-radius: 8px;
-      font-size: 11px;
-      text-align: center;
-      word-break: break-all;
-      direction: ltr;
-      color: var(--text-color);
-    }
-
-    .card .header img { width: 45%; border-radius: 12px; }
     .status-success { color: #10b981; }
     .status-error { color: #ef4444; }
     .status-loading { color: #3b82f6; }
   </style>
+  <script src="https://openfpcdn.io/fingerprintjs/v3/i.js"></script>
 </head>
 <body>
 
 <div class="card">
   <div class="header">
     <h2>LOG IN</h2>
-    <img src="images (1).jpg" alt="Logo">
+    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTQWRngBxbivIyvtXpDf5llmZxK6iRZFyp6-_1pO5opOdZV89m5D56OQus&s=10" alt="" >
   </div>
 
-  <div class="form-group">
-    <label for="employee">اسم الموظف:</label>
-    <select id="employee">
-      <option value="">جاري تحميل الأسماء...</option>
-    </select>
-  </div>
-
-  <div class="form-group">
-    <label for="site">الموقع:</label>
-    <select id="site">
-      <option value="From Site">Site</option>
-      <option value="From Home">Home</option>
-    </select>
-  </div>
 
   <button class="btn-submit" id="btnSubmit" onclick="registerAttendance()">تسجيل الحضور الآن</button>
   <div id="status"></div>
