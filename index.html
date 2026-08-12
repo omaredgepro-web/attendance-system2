@@ -30,115 +30,41 @@
       --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
     }
 
-    * {
-      box-sizing: border-box;
-      transition: background-color 0.3s, color 0.3s;
-    }
+    * { box-sizing: border-box; transition: background-color 0.3s, color 0.3s; }
 
     body {
       font-family: 'Tajawal', sans-serif;
       background-color: var(--bg-color);
       color: var(--text-color);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      margin: 0;
-      padding: 20px;
+      display: flex; justify-content: center; align-items: center;
+      min-height: 100vh; margin: 0; padding: 20px;
     }
 
     .card {
-      background: var(--card-bg);
-      padding: 35px 30px;
-      border-radius: 20px;
-      box-shadow: var(--shadow);
-      width: 100%;
-      max-width: 420px;
-      border: 1px solid var(--border-color);
+      background: var(--card-bg); padding: 35px 30px; border-radius: 20px;
+      box-shadow: var(--shadow); width: 100%; max-width: 420px; border: 1px solid var(--border-color);
     }
 
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 25px;
-    }
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+    h2 { margin: 0; font-size: 22px; font-weight: 700; }
+    .form-group { margin-bottom: 20px; text-align: right; }
+    label { display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500; color: var(--subtext-color); }
 
-    h2 {
-      margin: 0;
-      font-size: 22px;
-      font-weight: 700;
-    }
-
-    .form-group {
-      margin-bottom: 20px;
-      text-align: right;
-    }
-
-    label {
-      display: block;
-      margin-bottom: 8px;
-      font-size: 14px;
-      font-weight: 500;
-      color: var(--subtext-color);
-    }
-
-    select {
-      width: 100%;
-      padding: 14px;
-      border-radius: 12px;
-      border: 1px solid var(--border-color);
-      background-color: var(--input-bg);
-      color: var(--text-color);
-      font-size: 15px;
-      font-family: 'Tajawal', sans-serif;
-      outline: none;
-      cursor: pointer;
-    }
-
-    select:focus {
-      border-color: var(--primary-color);
+    select, input[type="password"] {
+      width: 100%; padding: 14px; border-radius: 12px; border: 1px solid var(--border-color);
+      background-color: var(--input-bg); color: var(--text-color); font-size: 15px;
+      font-family: 'Tajawal', sans-serif; outline: none;
     }
 
     .btn-submit {
-      width: 100%;
-      padding: 15px;
-      margin-top: 10px;
-      border-radius: 12px;
-      border: none;
-      background-color: var(--primary-color);
-      color: white;
-      font-size: 16px;
-      font-weight: 700;
-      font-family: 'Tajawal', sans-serif;
-      cursor: pointer;
-      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+      width: 100%; padding: 15px; margin-top: 10px; border-radius: 12px; border: none;
+      background-color: var(--primary-color); color: white; font-size: 16px; font-weight: 700;
+      font-family: 'Tajawal', sans-serif; cursor: pointer; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
     }
 
-    .btn-submit:hover {
-      background-color: var(--primary-hover);
-    }
-
-    .btn-submit:disabled {
-      background-color: #94a3b8;
-      cursor: not-allowed;
-      box-shadow: none;
-    }
-
-    #status {
-      margin-top: 20px;
-      font-size: 14px;
-      font-weight: 500;
-      text-align: center;
-      min-height: 24px;
-      line-height: 1.5;
-    }
-
-    .card .header img {
-      width: 50%;
-      border-radius: 15px;
-    }
-
+    .btn-submit:disabled { background-color: #94a3b8; cursor: not-allowed; box-shadow: none; }
+    #status { margin-top: 20px; font-size: 14px; font-weight: 500; text-align: center; min-height: 24px; line-height: 1.5; }
+    .card .header img { width: 50%; border-radius: 15px; }
     .status-success { color: #10b981; }
     .status-error { color: #ef4444; }
     .status-loading { color: #3b82f6; }
@@ -154,9 +80,14 @@
 
   <div class="form-group">
     <label for="employee">اسم الموظف:</label>
-    <select id="employee">
+    <select id="employee" onchange="onEmployeeSelect()">
       <option value="">جاري تحميل الأسماء...</option>
     </select>
+  </div>
+
+  <div class="form-group">
+    <label for="pin">الرمز السري (PIN):</label>
+    <input type="password" id="pin" placeholder="أدخل الرمز السري الخاص بك" maxlength="6">
   </div>
 
   <div class="form-group">
@@ -178,10 +109,32 @@
     const savedTheme = localStorage.getItem('theme') || 'dark';
     document.documentElement.setAttribute('data-theme', savedTheme);
   }
-
   initTheme();
 
-  // 1. جلب قائمة الموظفين
+  // جلب أو توليد معرف جهاز ثابت
+  function getDeviceId() {
+    let devId = localStorage.getItem("app_device_id");
+    if (!devId) {
+      devId = "DEV_" + Math.random().toString(36).substring(2, 9) + "_" + Date.now().toString(36);
+      localStorage.setItem("app_device_id", devId);
+    }
+    return devId;
+  }
+
+  // ملء الـ PIN تلقائياً إذا كان محفوظاً للموظف
+  function onEmployeeSelect() {
+    const empName = document.getElementById("employee").value;
+    if (empName) {
+      const savedPin = localStorage.getItem("pin_" + empName);
+      if (savedPin) {
+        document.getElementById("pin").value = savedPin;
+      } else {
+        document.getElementById("pin").value = "";
+      }
+    }
+  }
+
+  // 1. جلب الأسماء
   function fetchEmployees() {
     const select = document.getElementById("employee");
     select.innerHTML = '<option value="">جاري تحميل الأسماء...</option>';
@@ -217,29 +170,10 @@
 
   fetchEmployees();
 
-  // 2. دالة توليد Device ID ثابت بدلالة بصمة الجهاز (Device Fingerprint)
-  function getDeviceId() {
-    const screenInfo = window.screen.width + "x" + window.screen.height + "x" + window.screen.colorDepth;
-    const navInfo = navigator.userAgent + "|" + navigator.language + "|" + (navigator.hardwareConcurrency || 1);
-    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
-    // دمج الخصائص الثابتة للجهاز
-    const rawString = screenInfo + "_" + navInfo + "_" + timeZone;
-    
-    // تحويل النص لرمز حمايتي رقمي (Hash)
-    let hash = 0;
-    for (let i = 0; i < rawString.length; i++) {
-      const char = rawString.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash |= 0;
-    }
-    
-    return "DEV_" + Math.abs(hash).toString(36).toUpperCase();
-  }
-
-  // 3. دالة تسجيل الحضور
+  // 2. تسجيل الحضور
   function registerAttendance() {
     const employee = document.getElementById("employee").value;
+    const pin = document.getElementById("pin").value;
     const site = document.getElementById("site").value;
     const statusDiv = document.getElementById("status");
     const btn = document.getElementById("btnSubmit");
@@ -249,9 +183,14 @@
       return;
     }
 
+    if (!pin) {
+      alert("يرجى أدخال الرمز السري (PIN)");
+      return;
+    }
+
     btn.disabled = true;
     statusDiv.className = "status-loading";
-    statusDiv.innerHTML = "⏳ جاري التحقق من معرّف الجهاز والموقع...";
+    statusDiv.innerHTML = "⏳ جاري التحقق من الـ PIN والموقع...";
 
     const deviceId = getDeviceId();
 
@@ -269,6 +208,8 @@
           btn.disabled = false;
 
           if (response.status === "success") {
+            // حفظ الـ PIN محلياً للتسجيل السهل المرة القادمة
+            localStorage.setItem("pin_" + employee, pin);
             statusDiv.className = "status-success";
             statusDiv.innerHTML = response.message;
           } else {
@@ -280,6 +221,7 @@
         const params = new URLSearchParams({
           action: "register",
           employee_name: employee,
+          pin: pin,
           site: site,
           location: location,
           device_id: deviceId,
