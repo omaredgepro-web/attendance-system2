@@ -9,24 +9,24 @@
     :root {
       --bg-color: #f4f7f6;
       --card-bg: #ffffff;
-      --text-color: #2c3e50;
+      --text-color: #0e13a4;
       --subtext-color: #7f8c8d;
       --input-bg: #f9fbfb;
       --border-color: #e2e8f0;
       --primary-color: #10b981;
-      --primary-hover: #059669;
+      --primary-hover: #c0db28;
       --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
     }
 
     [data-theme="dark"] {
-      --bg-color: #0f172a;
-      --card-bg: #1e293b;
-      --text-color: #f8fafc;
-      --subtext-color: #94a3b8;
-      --input-bg: #0f172a;
+      --bg-color: #661C1E;
+      --card-bg: #CD7A41;
+      --text-color: #661C1E;
+      --subtext-color: #661C1E;
+      --input-bg: #f5f8fc;
       --border-color: #334155;
-      --primary-color: #10b981;
-      --primary-hover: #34d399;
+      --primary-color: #661C1E;
+      --primary-hover: #f00606;
       --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
     }
 
@@ -144,19 +144,22 @@
       min-height: 24px;
       line-height: 1.5;
     }
+    .card .header img{
+      width: 50%;
+      border-radius: 15px;
+    }
 
     .status-success { color: #10b981; }
     .status-error { color: #ef4444; }
     .status-loading { color: #3b82f6; }
   </style>
-  <script src="https://openfpcdn.io/fingerprintjs/v3/i.js"></script>
 </head>
 <body>
 
 <div class="card">
   <div class="header">
-    <h2>📍 تسجيل الحضور</h2>
-    <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙 داكن</button>
+    <h2>LOG IN</h2>
+    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTQWRngBxbivIyvtXpDf5llmZxK6iRZFyp6-_1pO5opOdZV89m5D56OQus&s=10" alt="" >
   </div>
 
   <div class="form-group">
@@ -184,19 +187,6 @@
   function initTheme() {
     const savedTheme = localStorage.getItem('theme') || 'dark';
     document.documentElement.setAttribute('data-theme', savedTheme);
-    updateThemeBtnText(savedTheme);
-  }
-
-  function toggleTheme() {
-    const currentTheme = document.documentElement.getAttribute('data-theme');
-    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-    document.documentElement.setAttribute('data-theme', newTheme);
-    localStorage.setItem('theme', newTheme);
-    updateThemeBtnText(newTheme);
-  }
-
-  function updateThemeBtnText(theme) {
-    document.getElementById('themeBtn').innerText = theme === 'dark' ? '☀️ فاتح' : '🌙 داكن';
   }
 
   initTheme();
@@ -237,29 +227,41 @@
 
   fetchEmployees();
 
-  // 2. دالة الحصول على Device ID موثوقة ومضمونة 100%
-  async function getDeviceId() {
-    let localId = localStorage.getItem("app_device_id");
+  // التعامل مع الـ Cookies كحفظ إضافي لمنع فقدان الـ ID
+  function setCookie(name, value, days) {
+    let expires = "";
+    if (days) {
+      let date = new Date();
+      date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+      expires = "; expires=" + date.toUTCString();
+    }
+    document.cookie = name + "=" + (value || "") + expires + "; path=/; SameSite=Lax";
+  }
 
-    if (localId && localId !== "Unknown_Device") {
+  function getCookie(name) {
+    let nameEQ = name + "=";
+    let ca = document.cookie.split(';');
+    for (let i = 0; i < ca.length; i++) {
+      let c = ca[i];
+      while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+      if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+    }
+    return null;
+  }
+
+  // 2. دالة توليد وتثبيت Device ID دائم وموثوق
+  function getDeviceId() {
+    let localId = localStorage.getItem("app_device_id") || getCookie("app_device_id");
+
+    if (localId && localId !== "Unknown_Device" && localId.trim() !== "") {
+      localStorage.setItem("app_device_id", localId);
+      setCookie("app_device_id", localId, 365);
       return localId;
     }
 
-    try {
-      if (window.FingerprintJS) {
-        const fp = await FingerprintJS.load();
-        const result = await fp.get();
-        if (result && result.visitorId) {
-          localStorage.setItem("app_device_id", result.visitorId);
-          return result.visitorId;
-        }
-      }
-    } catch (e) {
-      console.log("FingerprintJS Error: ", e);
-    }
-    
     localId = "DEV_" + Math.random().toString(36).substring(2, 9) + "_" + Date.now().toString(36);
     localStorage.setItem("app_device_id", localId);
+    setCookie("app_device_id", localId, 365);
     return localId;
   }
 
@@ -279,7 +281,7 @@
     statusDiv.className = "status-loading";
     statusDiv.innerHTML = "⏳ جاري التحقق من معرّف الجهاز والموقع...";
 
-    const deviceId = await getDeviceId();
+    const deviceId = getDeviceId();
 
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition((position) => {
