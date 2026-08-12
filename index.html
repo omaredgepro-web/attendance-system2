@@ -249,21 +249,22 @@
     return null;
   }
 
-  // 2. دالة توليد وتثبيت Device ID دائم وموثوق
+// الحصول على Device ID موحد (LocalStorage + Cookie)
   function getDeviceId() {
     let localId = localStorage.getItem("app_device_id") || getCookie("app_device_id");
 
-    if (localId && localId !== "Unknown_Device" && localId.trim() !== "") {
-      localStorage.setItem("app_device_id", localId);
-      setCookie("app_device_id", localId, 365);
-      return localId;
+    if (!localId || localId === "Unknown_Device" || localId.trim() === "") {
+      localId = "DEV_" + Math.random().toString(36).substring(2, 9) + "_" + Date.now().toString(36);
     }
 
-    localId = "DEV_" + Math.random().toString(36).substring(2, 9) + "_" + Date.now().toString(36);
     localStorage.setItem("app_device_id", localId);
     setCookie("app_device_id", localId, 365);
     return localId;
   }
+
+  // عرض الـ Device ID للمستخدم
+  const currentDeviceId = getDeviceId();
+  document.getElementById("deviceBox").innerText = "Device ID: " + currentDeviceId;
 
   // 3. دالة تسجيل الحضور
   async function registerAttendance() {
