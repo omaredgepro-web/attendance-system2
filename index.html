@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>نظام تسجيل الحضور اليومي</title>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-color: #f4f7f6;
+      --card-bg: #ffffff;
+      --text-color: #2c3e50;
+      --subtext-color: #7f8c8d;
+      --input-bg: #f9fbfb;
+      --border-color: #e2e8f0;
+      --primary-color: #10b981;
+      --primary-hover: #059669;
+      --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+    }
+
+    [data-theme="dark"] {
+      --bg-color: #0f172a;
+      --card-bg: #1e293b;
+      --text-color: #f8fafc;
+      --subtext-color: #94a3b8;
+      --input-bg: #0f172a;
+      --border-color: #334155;
+      --primary-color: #10b981;
+      --primary-hover: #34d399;
+      --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+    }
+
+    * {
+      box-sizing: border-box;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    body {
+      font-family: 'Tajawal', sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      padding: 35px 30px;
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      width: 100%;
+      max-width: 420px;
+      border: 1px solid var(--border-color);
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 25px;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    .theme-toggle {
+      background: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--text-color);
+      padding: 8px 12px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 14px;
+      font-family: 'Tajawal', sans-serif;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+      text-align: right;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--subtext-color);
+    }
+
+    select {
+      width: 100%;
+      padding: 14px;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      background-color: var(--input-bg);
+      color: var(--text-color);
+      font-size: 15px;
+      font-family: 'Tajawal', sans-serif;
+      outline: none;
+      cursor: pointer;
+    }
+
+    select:focus {
+      border-color: var(--primary-color);
+    }
+
+    .btn-submit {
+      width: 100%;
+      padding: 15px;
+      margin-top: 10px;
+      border-radius: 12px;
+      border: none;
+      background-color: var(--primary-color);
+      color: white;
+      font-size: 16px;
+      font-weight: 700;
+      font-family: 'Tajawal', sans-serif;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+    }
+
+    .btn-submit:hover {
+      background-color: var(--primary-hover);
+    }
+
+    .btn-submit:disabled {
+      background-color: #94a3b8;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    #status {
+      margin-top: 20px;
+      font-size: 14px;
+      font-weight: 500;
+      text-align: center;
+      min-height: 24px;
+    }
+
+    .status-success { color: #10b981; }
+    .status-error { color: #ef4444; }
+    .status-loading { color: #3b82f6; }
+  </style>
+  <script src="https://openfpcdn.io/fingerprintjs/v3/i.js"></script>
+</head>
+<body>
+
+<div class="card">
+  <div class="header">
+    <h2>📍 تسجيل الحضور</h2>
+    <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙 داكن</button>
+  </div>
+
+  <div class="form-group">
+    <label for="employee">اسم الموظف:</label>
+    <select id="employee">
+      <option value="">جاري تحميل الأسماء...</option>
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label for="site">الموقع / :</label>
+    <select id="site">
+      <option value="From Site">Site</option>
+      <option value="From Home">Home</option>
+    </select>
+  </div>
+
+  <button class="btn-submit" id="btnSubmit" onclick="registerAttendance()">تسجيل الحضور الآن</button>
+  <div id="status"></div>
+</div>
+
+<script>
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyrNlSdWmNdiXO7MWmjGTm-rCd-pr-DU2p_vlRVDv2k8Yd8_Rlc79elW4qX0IIrMkymxA/exec"; 
+
+  function initTheme() {
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    updateThemeBtnText(savedTheme);
+  }
+
+  function toggleTheme() {
+    const currentTheme = document.documentElement.getAttribute('data-theme');
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('theme', newTheme);
+    updateThemeBtnText(newTheme);
+  }
+
+  function updateThemeBtnText(theme) {
+    document.getElementById('themeBtn').innerText = theme === 'dark' ? '☀️ فاتح' : '🌙 داكن';
+  }
+
+  initTheme();
+
+  // جلب أسماء الموظفين من الشيت
+  async function fetchEmployees() {
+    const select = document.getElementById("employee");
+    select.innerHTML = '<option value="">جاري تحميل الأسماء...</option>';
+
+    try {
+      const response = await fetch(SCRIPT_URL);
+      const employees = await response.json();
+
+      if (Array.isArray(employees) && employees.length > 0) {
+        select.innerHTML = '<option value="">اختر اسمك من القائمة...</option>';
+        employees.forEach(emp => {
+          const opt = document.createElement('option');
+          opt.value = emp;
+          opt.innerText = emp;
+          select.appendChild(opt);
+        });
+      } else {
+        select.innerHTML = '<option value="">لا توجد أسماء في شيت Employee</option>';
+      }
+    } catch (error) {
+      console.error(error);
+      select.innerHTML = '<option value="">تعذر تحميل الأسماء</option>';
+    }
+  }
+
+  fetchEmployees();
+
+  // دالة تسجيل الحضور
+  async function registerAttendance() {
+    const employee = document.getElementById("employee").value;
+    const site = document.getElementById("site").value;
+    const statusDiv = document.getElementById("status");
+    const btn = document.getElementById("btnSubmit");
+
+    if (!employee) {
+      alert("يرجى اختيار اسم الموظف أولاً");
+      return;
+    }
+
+    btn.disabled = true;
+    statusDiv.className = "status-loading";
+    statusDiv.innerHTML = "⏳ جاري جلب اللوكيشن وهويّة الجهاز...";
+
+    let deviceId = "Unknown_Device";
+    try {
+      if (window.FingerprintJS) {
+        const fp = await FingerprintJS.load();
+        const result = await fp.get();
+        deviceId = result.visitorId;
+      }
+    } catch (e) {
+      deviceId = window.navigator.userAgent.replace(/[^a-zA-Z0-9]/g, '').slice(-15);
+    }
+
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(async (position) => {
+        const location = position.coords.latitude + "," + position.coords.longitude;
+        statusDiv.innerHTML = "📡 جاري إرسال والتحقق من البيانات...";
+
+        try {
+          const payload = {
+            employee_name: employee,
+            site: site,
+            location: location,
+            device_id: deviceId
+          };
+
+          // إرسال كـ text/plain متوافق مع قيود CORS في Google Apps Script
+          const res = await fetch(SCRIPT_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify(payload)
+          });
+
+          const result = await res.json();
+
+          if (result.status === "success") {
+            statusDiv.className = "status-success";
+            statusDiv.innerHTML = result.message;
+          } else {
+            statusDiv.className = "status-error";
+            statusDiv.innerHTML = result.message;
+          }
+
+        } catch (postError) {
+          console.error("Fetch Error:", postError);
+          statusDiv.className = "status-error";
+          statusDiv.innerHTML = "❌ حدث خطأ أثناء الاتصال بالخادم.";
+        } finally {
+          btn.disabled = false;
+        }
+
+      }, (error) => {
+        statusDiv.className = "status-error";
+        statusDiv.innerHTML = "❌ يرجى تفعيل الـ GPS والسماح للوصول إلى موقعك!";
+        btn.disabled = false;
+      }, { enableHighAccuracy: true, timeout: 7000 });
+    } else {
+      alert("المتصفح لا يدعم تحديد الموقع الجغرافي.");
+      btn.disabled = false;
+    }
+  }
+</script>
+
+</body>
+</html>
